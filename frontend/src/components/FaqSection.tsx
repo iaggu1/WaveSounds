@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Minus, Plus } from 'lucide-react';
 const faqs = [
-  ['Vocês comprimem os arquivos de áudio enviados?', 'Nunca. Armazenamos o arquivo master original (WAV, AIFF, FLAC) intacto para download e fazemos streaming lossless FLAC/PCM adaptativo sem alterar a dinâmica ou resposta de frequência.'],
+  ['Vocês comprimem os arquivos de áudio enviados?', 'Mantemos o arquivo recebido (WAV, MP3 ou FLAC) intacto para download e não aplicamos compressão destrutiva adicional ao áudio durante o streaming.'],
   ['Meus clientes precisam criar uma conta para ouvir e comentar?', 'Não. Quem recebe o link acessa o player instantaneamente no navegador do computador ou celular, podendo ouvir e deixar comentários no timecode informando apenas o nome.'],
   ['Posso proteger meus lançamentos inéditos contra vazamentos?', 'Sim. Você pode desativar o botão de download, exigir senha de acesso, definir data de expiração do link e acompanhar o registro de acessos.'],
 ];

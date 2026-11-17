@@ -1,0 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: light; }
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 5rem; }
+body { margin: 0; background: #F9FAFB; color: #111827; font-family: var(--font-inter), sans-serif; -webkit-font-smoothing: antialiased; }
+h1, h2, h3, .brand { font-family: var(--font-jakarta), sans-serif; }
+button, input { font: inherit; }
+::selection { background: #e0e7ff; color: #312e81; }
+.wave-bar { transition: background-color 160ms ease, transform 160ms ease; }
+.wave-bar:hover { transform: scaleY(1.16); }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }

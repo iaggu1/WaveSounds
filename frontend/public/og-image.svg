@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" fill="none">
+  <rect width="1200" height="630" fill="#F9FAFB"/>
+  <circle cx="1050" cy="90" r="290" fill="#EEF2FF"/>
+  <circle cx="1080" cy="600" r="220" fill="#F3F4F6"/>
+  <rect x="80" y="77" width="1040" height="476" rx="28" fill="white" stroke="#E5E7EB"/>
+  <rect x="124" y="121" width="54" height="54" rx="16" fill="#EEF2FF"/>
+  <path d="M140 148h4l5-12 7 23 7-17 4 6h4" stroke="#4F46E5" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="196" y="158" fill="#111827" font-family="Arial,sans-serif" font-size="30" font-weight="700" letter-spacing="-1.8">forma.</text>
+  <text x="124" y="293" fill="#111827" font-family="Arial,sans-serif" font-size="64" font-weight="700" letter-spacing="-3">Seu estúdio</text>
+  <text x="124" y="365" fill="#111827" font-family="Arial,sans-serif" font-size="64" font-weight="700" letter-spacing="-3">na nuvem.</text>
+  <text x="128" y="420" fill="#4B5563" font-family="Arial,sans-serif" font-size="22">Compartilhe áudio lossless. Receba feedback preciso.</text>
+  <rect x="124" y="467" width="178" height="48" rx="12" fill="#111827"/>
+  <text x="146" y="498" fill="white" font-family="Arial,sans-serif" font-size="15" font-weight="600">Comece grátis</text>
+  <g opacity=".85" fill="#6366F1">
+    <rect x="875" y="269" width="7" height="42" rx="3.5"/><rect x="889" y="247" width="7" height="86" rx="3.5"/><rect x="903" y="279" width="7" height="22" rx="3.5"/><rect x="917" y="226" width="7" height="127" rx="3.5"/><rect x="931" y="255" width="7" height="69" rx="3.5"/><rect x="945" y="238" width="7" height="104" rx="3.5"/><rect x="959" y="276" width="7" height="28" rx="3.5"/><rect x="973" y="214" width="7" height="153" rx="3.5"/><rect x="987" y="246" width="7" height="88" rx="3.5"/><rect x="1001" y="265" width="7" height="51" rx="3.5"/>
+  </g>
+  <text x="865" y="405" fill="#6B7280" font-family="Arial,sans-serif" font-size="13" letter-spacing="1.3">AUDIO · REVISÃO · COLABORAÇÃO</text>
+</svg>

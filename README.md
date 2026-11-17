@@ -6,6 +6,8 @@ Landing page para a forma., um espaço de trabalho minimalista para revisão de 
 
 Requisitos: Docker Desktop com Docker Compose ativo.
 
+O frontend usa Node.js 20 em uma imagem Debian slim para manter compatibilidade com dependências nativas do Next.js no Docker Desktop.
+
 No PowerShell, na raiz do projeto:
 
 ```powershell
@@ -14,6 +16,8 @@ docker compose up --build
 ```
 
 Abra **http://localhost:3000**. O Compose sobe PostgreSQL, FastAPI e Next.js; somente a porta `3000` é publicada no computador. O arquivo `.env` contém uma senha fictícia para uso local: troque-a antes de expor o serviço em qualquer rede.
+
+Se já houver uma imagem antiga do frontend, reconstrua-a com `docker compose build --no-cache frontend` e inicie os serviços com `docker compose up`.
 
 Para encerrar, pressione `Ctrl+C` e execute `docker compose down`. O volume do PostgreSQL é preservado.
 

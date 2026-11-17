@@ -51,6 +51,7 @@ Requisitos: Python 3.11 ou superior, Node.js 18 ou superior e PostgreSQL local.
 
 ## Limites da demonstração
 
+- A seção de fluxo lista WAV, MP3 e FLAC como formatos de envio, mas esta landing page não implementa upload de arquivos.
 - O player gera um tom discreto via Web Audio API para demonstrar a interação; não reproduz os arquivos indicados no mockup.
 - A tabela é criada ao iniciar a API. Adote migrações antes de evoluir o schema em produção.
 - Planos, nomes de estúdios, capacidades e afirmações comerciais vieram da especificação e devem ser confirmados antes do lançamento público.

@@ -1,8 +1,7 @@
 type LeadPayload = { email: string; plan_interest: 'starter' | 'pro'; company_website: string };
-const apiUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '');
+const apiUrl = (process.env.NEXT_PUBLIC_API_URL ?? '').replace(/\/$/, '');
 
 export async function createLead(payload: LeadPayload): Promise<void> {
-  if (!apiUrl) throw new Error('Serviço indisponível no momento. Tente novamente mais tarde.');
   let response: Response;
   try {
     response = await fetch(`${apiUrl}/api/v1/leads`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), cache: 'no-store' });

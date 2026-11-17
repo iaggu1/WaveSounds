@@ -11,7 +11,7 @@ from backend.api.v1.endpoints import router
 from backend.core.config import get_settings
 from backend.core.database import engine
 from backend.models.lead import Base
-from backend.core.security import allow_request
+from backend.core.security import allow_request, client_ip
 
 settings = get_settings()
 ALLOWED_ORIGINS = {origin.strip() for origin in settings.allowed_origins.split(",") if origin.strip()}
@@ -39,8 +39,8 @@ app.add_middleware(
 @app.middleware("http")
 async def add_security_headers(request: Request, call_next):
     if request.method == "POST" and request.url.path == "/api/v1/leads":
-        client_ip = request.client.host if request.client else "unknown"
-        if not allow_request(client_ip):
+        request_ip = client_ip(request)
+        if not allow_request(request_ip):
             limited = JSONResponse(status_code=429, content={"detail": "Limite de tentativas excedido. Aguarde um minuto e tente novamente."})
             origin = request.headers.get("origin")
             if origin in ALLOWED_ORIGINS:

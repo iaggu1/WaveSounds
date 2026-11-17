@@ -1,10 +1,16 @@
 import hashlib
+import ipaddress
 import logging
 import time
 from collections import defaultdict, deque
 from threading import Lock
 
+from starlette.requests import Request
+
+from backend.core.config import get_settings
+
 logger = logging.getLogger("forma.security")
+_trusted_proxy_ips = {ip.strip() for ip in get_settings().trusted_proxy_ips.split(",") if ip.strip()}
 _requests: dict[str, deque[float]] = defaultdict(deque)
 _lock = Lock()
 _WINDOW_SECONDS = 60
@@ -13,6 +19,17 @@ _MAX_REQUESTS = 5
 
 def ip_digest(ip_address: str) -> str:
     return hashlib.sha256(ip_address.encode("utf-8")).hexdigest()
+
+
+def client_ip(request: Request) -> str:
+    direct_ip = request.client.host if request.client else "unknown"
+    if direct_ip not in _trusted_proxy_ips:
+        return direct_ip
+    forwarded_ip = request.headers.get("x-forma-client-ip", "")
+    try:
+        return str(ipaddress.ip_address(forwarded_ip))
+    except ValueError:
+        return direct_ip
 
 
 def masked_email(email: str) -> str:

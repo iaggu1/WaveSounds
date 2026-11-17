@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     app_env: str = "development"
     port: int = 8000
     allowed_origins: str = "http://localhost:3000"
+    trusted_proxy_ips: str = ""
     database_url: str
     resend_api_key: str = ""
     email_from: str = "convite@forma.audio"

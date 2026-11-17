@@ -1,42 +1,56 @@
 # forma.
 
-Landing page para a forma., um espaço de trabalho minimalista para revisão de áudio lossless. O projeto separa a interface Next.js da API de captura de leads em FastAPI.
+Landing page para a forma., um espaço de trabalho minimalista para revisão de áudio lossless. O navegador acessa frontend e API pela mesma origem; o Next.js encaminha `/api/v1/*` ao FastAPI na rede interna.
 
-## Executar localmente
+## Iniciar tudo com um comando
 
-Requisitos: Python 3.11 ou superior, Node.js 18 ou superior e PostgreSQL.
+Requisitos: Docker Desktop com Docker Compose ativo.
 
-1. Copie `backend/.env.example` para `backend/.env` e configure o PostgreSQL, as origens permitidas e a chave da Resend. O backend carrega esse arquivo usando um caminho relativo a `backend/core/config.py`, independentemente da pasta atual.
-2. Na raiz do repositório, instale as dependências da API com `pip install -r backend/requirements.txt` e inicie-a com `uvicorn backend.main:app --reload`.
-3. Copie `frontend/.env.local.example` para `frontend/.env.local`.
-4. Na pasta `frontend/`, execute `npm install` e depois `npm run dev`.
+No PowerShell, na raiz do projeto:
 
-A API cria a tabela de leads ao iniciar. O rate limit guarda chaves IP em memória e vale por processo; use um único worker ou substitua-o por uma solução compartilhada, como Redis, ao escalar. O backend usa o endereço direto do cliente ASGI e não confia em cabeçalhos de IP encaminhado por proxy.
+```powershell
+Copy-Item .env.example .env
+docker compose up --build
+```
+
+Abra **http://localhost:3000**. O Compose sobe PostgreSQL, FastAPI e Next.js; somente a porta `3000` é publicada no computador. O arquivo `.env` contém uma senha fictícia para uso local: troque-a antes de expor o serviço em qualquer rede.
+
+Para encerrar, pressione `Ctrl+C` e execute `docker compose down`. O volume do PostgreSQL é preservado.
+
+O envio do formulário persiste o lead no PostgreSQL. Para enviar a mensagem de boas-vindas, configure `RESEND_API_KEY` e `EMAIL_FROM` no `.env`; sem uma chave, a aplicação mantém o cadastro e ignora o e-mail.
+
+## Executar os serviços separadamente
+
+Requisitos: Python 3.11 ou superior, Node.js 18 ou superior e PostgreSQL local.
+
+1. Copie `backend/.env.example` para `backend/.env` e configure a conexão PostgreSQL, CORS e Resend.
+2. Na raiz, instale a API com `pip install -r backend/requirements.txt` e execute `uvicorn backend.main:app --reload`.
+3. Em outro terminal, entre em `frontend/`, copie `.env.local.example` para `.env.local`, execute `npm install` e `npm run dev`.
+4. Abra **http://localhost:3000**. O Next.js encaminha `/api/v1/*` para `http://127.0.0.1:8000` por padrão.
 
 ## Estrutura
 
 - `frontend/src/app`: rotas App Router, metadados, fontes e estilos globais.
-- `frontend/src/components`: seções da landing page; os componentes de formulário, player, FAQ e hero usam estado no cliente.
-- `frontend/src/lib/api-client.ts`: envio de leads pelo navegador. A URL pública da API é a única variável `NEXT_PUBLIC_`.
-- `frontend/public/og-image.svg`: imagem de compartilhamento Open Graph da marca.
-- `backend/api/v1`: endpoint de leads e envio de boas-vindas em tarefa de background.
-- `backend/core`: configurações de ambiente, sessão SQLAlchemy assíncrona e limite de requisições.
+- `frontend/src/components`: seções da landing page; formulário, player, FAQ e hero usam estado no cliente.
+- `frontend/src/lib/api-client.ts`: envio de leads pela mesma origem do site.
+- `frontend/middleware.ts`: encaminha um IP validado pelo backend apenas quando a chamada vem do proxy confiável.
+- `backend/api/v1`: endpoint de leads e envio de boas-vindas em background.
+- `backend/core`: configurações, sessão SQLAlchemy assíncrona e rate limit.
 - `backend/models` e `backend/schemas`: modelo SQLAlchemy e contrato Pydantic estrito.
+- `compose.yaml` e os Dockerfiles: ambiente local integrado com somente a porta web publicada.
 
-## Segurança e privacidade
+## Segurança e operação
 
-- CORS aceita somente as origens de `ALLOWED_ORIGINS`, separadas por vírgula, e libera `POST`/`OPTIONS` com `Content-Type`.
-- O endpoint aplica uma janela móvel de até cinco requisições por minuto por IP, inclusive antes da validação do corpo. O campo honeypot preenchido recebe uma resposta de sucesso simulada sem persistência.
-- Schemas Pydantic rejeitam campos desconhecidos. E-mails são validados e normalizados; consultas usam expressões SQLAlchemy parametrizadas.
-- E-mails duplicados recebem uma resposta neutra. O endereço IP bruto não é persistido; somente seu SHA-256 é gravado para auditoria antiabuso.
-- Logs mascaram endereços de e-mail e não registram payloads. Erros internos retornam mensagens genéricas.
-- A API define cabeçalhos contra clickjacking, MIME sniffing, exposição de referrer e permissões desnecessárias. A chave Resend fica somente no ambiente do backend.
-- `.gitignore` exclui ambientes virtuais, dependências, artefatos de build, logs e arquivos `.env`; os exemplos de ambiente permanecem versionáveis.
+- CORS aceita apenas `ALLOWED_ORIGINS`; a chamada browser do setup integrado permanece na origem `localhost:3000`.
+- O backend rejeita campos desconhecidos, valida e normaliza e-mails, mascara PII em logs e retorna erros internos genéricos.
+- SQLAlchemy executa consultas parametrizadas. E-mails duplicados recebem resposta neutra. O IP não é persistido em texto claro; seu SHA-256 é usado para auditoria antiabuso.
+- O rate limit permite cinco requisições por minuto por endereço. O backend só considera `X-Forma-Client-IP` quando a conexão vem de um IP listado em `TRUSTED_PROXY_IPS`; no Compose local, apenas o contêiner Next.js é confiável e a API não publica sua porta no host.
+- O rate limit é mantido em memória por processo. Em produção com réplicas, use um armazenamento compartilhado e configure a cadeia de proxies confiáveis no ingress.
+- Os headers da API protegem contra clickjacking, MIME sniffing, exposição desnecessária de referrer e permissões de browser não usadas.
+- `.gitignore` exclui ambientes virtuais, dependências, artefatos de build, logs e arquivos `.env`, mantendo os exemplos de configuração versionáveis.
 
-## Operação e limites da demonstração
+## Limites da demonstração
 
-- Configure PostgreSQL e uma chave Resend válida antes de capturar leads reais. Sem a chave, o envio de e-mail é ignorado.
-- A criação automática de tabelas atende à versão inicial; adote migrações antes de evoluir o schema em produção.
-- O rate limit é local ao processo. Para múltiplos workers, use um armazenamento compartilhado.
-- O player cria um tom discreto via Web Audio API para demonstrar a interação; não reproduz os arquivos de áudio exibidos no mockup.
-- Planos, nomes de estúdios, capacidades e afirmações comerciais refletem a especificação fornecida e devem ser confirmados antes do lançamento público.
+- O player gera um tom discreto via Web Audio API para demonstrar a interação; não reproduz os arquivos indicados no mockup.
+- A tabela é criada ao iniciar a API. Adote migrações antes de evoluir o schema em produção.
+- Planos, nomes de estúdios, capacidades e afirmações comerciais vieram da especificação e devem ser confirmados antes do lançamento público.

@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.config import get_settings
 from backend.core.database import get_session
-from backend.core.security import ip_digest, log_email_event
+from backend.core.security import client_ip, ip_digest, log_email_event
 from backend.models.lead import Lead
 from backend.schemas.lead import LeadCreateRequest
 
@@ -49,7 +49,7 @@ async def create_lead(
     response: Response,
     session: AsyncSession = Depends(get_session),
 ) -> dict[str, str]:
-    client_ip = request.client.host if request.client else "unknown"
+    request_ip = client_ip(request)
     if payload.company_website:
         return SUCCESS
 
@@ -60,7 +60,7 @@ async def create_lead(
             response.status_code = status.HTTP_200_OK
             return SUCCESS
 
-        lead = Lead(email=email, plan_interest=payload.plan_interest, ip_hash=ip_digest(client_ip))
+        lead = Lead(email=email, plan_interest=payload.plan_interest, ip_hash=ip_digest(request_ip))
         session.add(lead)
         await session.commit()
     except IntegrityError:

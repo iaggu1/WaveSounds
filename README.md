@@ -32,6 +32,7 @@ Requisitos: Python 3.11 ou superior, Node.js 18 ou superior e PostgreSQL local.
 
 - `frontend/src/app`: rotas App Router, metadados, fontes e estilos globais.
 - `frontend/src/components`: seções da landing page; formulário, player, FAQ e hero usam estado no cliente.
+- `frontend/src/components/ThemeProvider.tsx` e `ThemeToggle.tsx`: seletor entre modo claro e noturno, com preferência salva no navegador.
 - `frontend/src/lib/api-client.ts`: envio de leads pela mesma origem do site.
 - `frontend/middleware.ts`: encaminha um IP validado pelo backend apenas quando a chamada vem do proxy confiável.
 - `backend/api/v1`: endpoint de leads e envio de boas-vindas em background.
@@ -47,6 +48,7 @@ Requisitos: Python 3.11 ou superior, Node.js 18 ou superior e PostgreSQL local.
 - O rate limit permite cinco requisições por minuto por endereço. O backend só considera `X-Forma-Client-IP` quando a conexão vem de um IP listado em `TRUSTED_PROXY_IPS`; no Compose local, apenas o contêiner Next.js é confiável e a API não publica sua porta no host.
 - O rate limit é mantido em memória por processo. Em produção com réplicas, use um armazenamento compartilhado e configure a cadeia de proxies confiáveis no ingress.
 - Os headers da API protegem contra clickjacking, MIME sniffing, exposição desnecessária de referrer e permissões de browser não usadas.
+- O tema claro/noturno pode ser alternado pela navegação e a escolha fica salva no `localStorage`.
 - `.gitignore` exclui ambientes virtuais, dependências, artefatos de build, logs e arquivos `.env`, mantendo os exemplos de configuração versionáveis.
 
 ## Limites da demonstração

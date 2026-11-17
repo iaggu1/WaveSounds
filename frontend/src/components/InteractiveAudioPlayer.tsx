@@ -129,7 +129,7 @@ export default function InteractiveAudioPlayer() {
 
           <div className="relative mt-7">
             <div className="flex h-[76px] items-center gap-[2px]" aria-hidden="true">
-              {bars.map((height, index) => <span key={index} className="wave-bar flex-1 rounded-full" style={{ height: `${height}%`, backgroundColor: index / bars.length < progress ? '#6366f1' : '#e5e7eb' }} />)}
+              {bars.map((height, index) => <span key={index} className="wave-bar flex-1 rounded-full" style={{ height: `${height}%`, backgroundColor: index / bars.length < progress ? 'var(--wave-active)' : 'var(--wave-inactive)' }} />)}
             </div>
             <input aria-label="Posição na faixa" type="range" min={0} max={track.duration} value={current} onChange={(event) => seek(Number(event.target.value))} className="absolute inset-0 z-0 h-full w-full cursor-pointer opacity-0 focus-visible:opacity-20 focus-visible:accent-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-500" />
             {comments.map((item, index) => <button key={item.time} aria-label={`Comentário ${item.label}: ${item.text}`} onClick={() => { seek(item.time); setComment(index); }} className="absolute top-0 z-10 -translate-x-1/2" style={{ left: `${(item.time / track.duration) * 100}%` }}><span className="block h-2 w-2 rounded-full border-2 border-white bg-indigo-600 ring-2 ring-indigo-100" /></button>)}

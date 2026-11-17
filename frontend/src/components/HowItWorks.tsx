@@ -1,5 +1,5 @@
 const steps = [
-  ['01', 'Arraste seus arquivos WAV, AIFF ou FLAC', 'Upload paralelo de alta velocidade com preservação automática de metadados, BPM e tonalidade.'],
+  ['01', 'Arraste seus arquivos WAV, MP3 ou FLAC', 'Upload paralelo de alta velocidade com preservação automática de metadados, BPM e tonalidade.'],
   ['02', 'Personalize a apresentação', 'Adicione capa, notas de versão e escolha se o link permite download ou apenas audição em streaming.'],
   ['03', 'Compartilhe um link único', 'Seus colaboradores ou clientes ouvem em qualquer dispositivo com player instantâneo e deixam feedback centralizado.'],
 ];

@@ -6,7 +6,7 @@ Landing page para a forma., um espaço de trabalho minimalista para revisão de 
 
 Requisitos: Docker Desktop com Docker Compose ativo.
 
-O frontend usa Node.js 20 em uma imagem Debian slim para manter compatibilidade com dependências nativas do Next.js no Docker Desktop.
+O frontend usa Node.js 24 LTS em uma imagem Debian slim. A imagem instala as dependências com `npm ci` e o `package-lock.json` para reproduzir a árvore de pacotes.
 
 No PowerShell, na raiz do projeto:
 
@@ -25,11 +25,11 @@ O envio do formulário persiste o lead no PostgreSQL. Para enviar a mensagem de 
 
 ## Executar os serviços separadamente
 
-Requisitos: Python 3.11 ou superior, Node.js 18 ou superior e PostgreSQL local.
+Requisitos: Python 3.11 ou superior, Node.js 24 ou superior e PostgreSQL local.
 
 1. Copie `backend/.env.example` para `backend/.env` e configure a conexão PostgreSQL, CORS e Resend.
 2. Na raiz, instale a API com `pip install -r backend/requirements.txt` e execute `uvicorn backend.main:app --reload`.
-3. Em outro terminal, entre em `frontend/`, copie `.env.local.example` para `.env.local`, execute `npm install` e `npm run dev`.
+3. Em outro terminal, entre em `frontend/`, copie `.env.local.example` para `.env.local`, execute `npm ci` e `npm run dev`.
 4. Abra **http://localhost:3000**. O Next.js encaminha `/api/v1/*` para `http://127.0.0.1:8000` por padrão.
 
 ## Estrutura

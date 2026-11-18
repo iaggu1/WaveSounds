@@ -38,7 +38,7 @@ Requisitos: Python 3.11 ou superior, Node.js 24 ou superior, PostgreSQL e Redis 
 - `frontend/src/components`: seções da landing page; formulário, player, FAQ e hero usam estado no cliente.
 - `frontend/src/components/ThemeProvider.tsx` e `ThemeToggle.tsx`: seletor entre modo claro e noturno, com preferência salva no navegador.
 - `frontend/src/lib/api-client.ts`: envio de leads pela mesma origem do site.
-- `frontend/proxy.ts`: remove qualquer `X-Forma-Client-IP` enviado pelo navegador para que o cliente não escolha o IP usado no rate limit.
+- `frontend/src/proxy.ts`: remove qualquer `X-Forma-Client-IP` enviado pelo navegador, gera o nonce CSP para páginas e aplica os headers de segurança.
 - `backend/api/v1`: endpoint de leads e envio de boas-vindas em background.
 - `backend/core`: configurações, sessão SQLAlchemy assíncrona, cliente Redis e rate limit compartilhado.
 - `backend/models` e `backend/schemas`: modelo SQLAlchemy e contrato Pydantic estrito.

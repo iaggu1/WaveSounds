@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from backend.core.config import get_settings
 from backend.models.lead import Base
+from backend.models.outbox import EmailOutbox
 
 config = context.config
 config.set_main_option("sqlalchemy.url", get_settings().database_url.replace("%", "%%"))

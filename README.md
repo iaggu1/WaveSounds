@@ -54,9 +54,10 @@ O pipeline não publica imagens nem faz deploy. A exigência de aprovação de c
 - `frontend/src/components/ThemeProvider.tsx` e `ThemeToggle.tsx`: seletor entre modo claro e noturno, com preferência salva no navegador.
 - `frontend/src/lib/api-client.ts`: envio de leads pela mesma origem do site.
 - `frontend/src/proxy.ts`: sanitiza `X-Forma-Client-IP`, gera o nonce CSP para páginas e aplica os headers de segurança.
-- `backend/api/v1`: endpoint de leads e envio de boas-vindas em background.
+- `backend/api/v1`: endpoint de captura de leads e enfileiramento transacional de boas-vindas.
 - `backend/core`: configurações, sessão SQLAlchemy assíncrona, cliente Redis e rate limit compartilhado.
 - `backend/migrations`: migrações Alembic executadas antes de iniciar o backend.
+- `backend/workers/email_worker.py`: worker PostgreSQL para processar e-mails de boas-vindas fora da requisição web.
 - `backend/scripts`: comandos administrativos interativos para exclusão e limpeza por período, sem imprimir e-mails.
 - `backend/models` e `backend/schemas`: modelo SQLAlchemy e contrato Pydantic estrito.
 - `compose.yaml` e os Dockerfiles: ambiente local integrado com somente a porta web publicada.
@@ -65,6 +66,7 @@ O pipeline não publica imagens nem faz deploy. A exigência de aprovação de c
 
 - CORS aceita apenas `ALLOWED_ORIGINS`; a chamada browser do setup integrado permanece na origem `localhost:3000`.
 - O backend rejeita campos desconhecidos, valida e normaliza e-mails, mascara PII em logs e retorna erros internos genéricos.
+- O cadastro do lead e a criação do envio de boas-vindas são confirmados na mesma transação PostgreSQL. O worker processa a fila com lease recuperável, backoff exponencial, limite de cinco tentativas e chave de idempotência do Resend. A fila guarda apenas referência ao lead e estado operacional; não duplica e-mail ou conteúdo, remove jobs concluídos e é removida em cascata quando o lead é apagado. Uma exclusão aguarda eventual envio já iniciado, limitado pelo timeout HTTP de oito segundos.
 - SQLAlchemy executa consultas parametrizadas. E-mails duplicados recebem resposta neutra. O IP não é persistido no banco; somente uma chave derivada é mantida temporariamente no Redis para rate limit e expira em 60 segundos.
 - O rate limit permite cinco requisições por minuto por endereço, usando contador Redis atômico e compartilhado entre processos. Se Redis falhar, o endpoint rejeita novos envios com HTTP 503 para não desativar silenciosamente a proteção. O Redis não publica porta no host pelo Compose e o health check da API verifica Redis e PostgreSQL.
 - O backend só considera `X-Forma-Client-IP` quando a conexão vem de um IP listado em `TRUSTED_PROXY_IPS`. No padrão local, o Next.js remove esse header e chamadas compartilham o IP do proxy. Para per-client rate limit em produção, ative `TRUSTED_INGRESS_CLIENT_IP=true` somente atrás de um ingress que remove qualquer header recebido do cliente e escreve o IP de conexão; restrinja a rede para que apenas esse ingress alcance o Next.js. A API não publica sua porta no host.
@@ -76,6 +78,7 @@ O pipeline não publica imagens nem faz deploy. A exigência de aprovação de c
 - Para avaliar retenção, execute `docker compose exec backend python -m backend.scripts.purge_expired_leads --older-than-days <dias>` primeiro sem `--execute`. Após aprovar o prazo aplicável, repita com `--execute`. Não há exclusão automática nem prazo legal presumido; exclusões em backups seguem a política do operador.
 - Os headers da API protegem contra clickjacking, MIME sniffing, exposição desnecessária de referrer e permissões de browser não usadas.
 - O tema claro/noturno pode ser alternado pela navegação e a escolha fica salva no `localStorage`.
+- Sem `RESEND_API_KEY`, os envios permanecem pendentes. Configure a chave no `.env` e recrie o worker com `docker compose up -d email-worker`; acompanhe o processamento com `docker compose logs -f email-worker`. Falhas temporárias são repetidas com espera crescente; após cinco falhas, o job fica em estado `failed` para análise operacional.
 - `.gitignore` exclui ambientes virtuais, dependências, artefatos de build, logs e arquivos `.env`, mantendo os exemplos de configuração versionáveis.
 
 ## Limites da demonstração

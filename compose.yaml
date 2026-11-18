@@ -68,6 +68,22 @@ services:
       forma:
         ipv4_address: 172.28.0.3
 
+  email-worker:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    stop_grace_period: 20s
+    env_file: .env
+    command: ["python", "-m", "backend.workers.email_worker"]
+    depends_on:
+      database:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    networks:
+      forma:
+
   frontend:
     build:
       context: ./frontend

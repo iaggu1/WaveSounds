@@ -33,11 +33,6 @@ jobs:
           test -f frontend/package.json
           test -f frontend/package-lock.json
           cd frontend
-          pwd
-          ls -l package.json package-lock.json
-          npm config get package-lock
-          npm prefix
-          node -e "const lock = require('./package-lock.json'); console.log('lockfileVersion=' + lock.lockfileVersion + '; package=' + lock.name)"
           npm ci
       - name: Lint
         run: cd frontend && npm run lint

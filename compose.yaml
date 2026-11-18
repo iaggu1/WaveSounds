@@ -28,6 +28,7 @@ services:
       retries: 10
     networks:
       forma:
+        ipv4_address: 172.28.0.5
 
   backend:
     build:

@@ -1,8 +1,8 @@
-FROM node:20-bookworm-slim
+FROM node:24-bookworm-slim
 
 WORKDIR /app
-COPY package.json ./
-RUN npm install
+COPY package.json package-lock.json ./
+RUN npm ci
 COPY . .
 ARG API_INTERNAL_URL=http://backend:8000
 ENV API_INTERNAL_URL=${API_INTERNAL_URL}

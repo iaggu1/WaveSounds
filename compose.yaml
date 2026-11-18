@@ -74,6 +74,8 @@ services:
       args:
         API_INTERNAL_URL: http://backend:8000
     restart: unless-stopped
+    environment:
+      TRUSTED_INGRESS_CLIENT_IP: ${TRUSTED_INGRESS_CLIENT_IP:-false}
     depends_on:
       backend:
         condition: service_healthy

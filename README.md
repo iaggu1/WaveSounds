@@ -38,7 +38,7 @@ Requisitos: Python 3.11 ou superior, Node.js 24 ou superior, PostgreSQL e Redis 
 - `frontend/src/components`: seções da landing page; formulário, player, FAQ e hero usam estado no cliente.
 - `frontend/src/components/ThemeProvider.tsx` e `ThemeToggle.tsx`: seletor entre modo claro e noturno, com preferência salva no navegador.
 - `frontend/src/lib/api-client.ts`: envio de leads pela mesma origem do site.
-- `frontend/src/proxy.ts`: remove qualquer `X-Forma-Client-IP` enviado pelo navegador, gera o nonce CSP para páginas e aplica os headers de segurança.
+- `frontend/src/proxy.ts`: sanitiza `X-Forma-Client-IP`, gera o nonce CSP para páginas e aplica os headers de segurança.
 - `backend/api/v1`: endpoint de leads e envio de boas-vindas em background.
 - `backend/core`: configurações, sessão SQLAlchemy assíncrona, cliente Redis e rate limit compartilhado.
 - `backend/migrations`: migrações Alembic executadas antes de iniciar o backend.
@@ -51,7 +51,7 @@ Requisitos: Python 3.11 ou superior, Node.js 24 ou superior, PostgreSQL e Redis 
 - O backend rejeita campos desconhecidos, valida e normaliza e-mails, mascara PII em logs e retorna erros internos genéricos.
 - SQLAlchemy executa consultas parametrizadas. E-mails duplicados recebem resposta neutra. O IP não é persistido no banco; somente uma chave derivada é mantida temporariamente no Redis para rate limit e expira em 60 segundos.
 - O rate limit permite cinco requisições por minuto por endereço, usando contador Redis atômico e compartilhado entre processos. Se Redis falhar, o endpoint rejeita novos envios com HTTP 503 para não desativar silenciosamente a proteção. O Redis não publica porta no host pelo Compose e o health check da API verifica Redis e PostgreSQL.
-- O backend só considera `X-Forma-Client-IP` quando a conexão vem de um IP listado em `TRUSTED_PROXY_IPS`. O Next.js remove esse header vindo do navegador; no Compose local, chamadas compartilham o IP do proxy até que um ingress confiável configure a origem do IP do cliente. A API não publica sua porta no host.
+- O backend só considera `X-Forma-Client-IP` quando a conexão vem de um IP listado em `TRUSTED_PROXY_IPS`. No padrão local, o Next.js remove esse header e chamadas compartilham o IP do proxy. Para per-client rate limit em produção, ative `TRUSTED_INGRESS_CLIENT_IP=true` somente atrás de um ingress que remove qualquer header recebido do cliente e escreve o IP de conexão; restrinja a rede para que apenas esse ingress alcance o Next.js. A API não publica sua porta no host.
 - O frontend usa Next.js 16, React 19, ESLint 10 e `npm ci` com lockfile. O comando `npm run lint` executa ESLint diretamente, conforme o CLI atual do Next.js.
 - O frontend envia CSP com nonce por resposta, além de proteção contra MIME sniffing e clickjacking, política de referrer e permissões restritas. O nonce exige renderização dinâmica da página e desabilita cache compartilhado para HTML; os assets imutáveis são excluídos do proxy. Configure HSTS no ingress que termina TLS quando o domínio estiver servido somente por HTTPS.
 - A auditoria npm em 18/11/2026 reportou 19 alertas altos pelos caminhos transitivos até `picomatch` (GHSA-fc5q-39xc-vjpf). O aviso atual não lista versão corrigida. A cadeia pertence às ferramentas de build/lint; reexecute `npm audit` após atualização upstream e antes de publicar.

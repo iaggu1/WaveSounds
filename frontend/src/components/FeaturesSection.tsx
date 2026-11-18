@@ -1,0 +1,10 @@
+import { AudioLines, FolderOpen, LockKeyhole, MessageSquareQuote } from 'lucide-react';
+const features = [
+  { icon: AudioLines, title: 'Áudio lossless nativo & comparação A/B', text: 'Alterne instantaneamente entre a mixagem anterior e a master atual com nivelamento automático de loudness (LUFS), direto no navegador ou mobile.', wide: true },
+  { icon: MessageSquareQuote, title: 'Comentários no timecode', text: 'Clientes clicam exatamente no segundo da onda sonora para deixar notas. Sem precisar criar conta.', wide: false },
+  { icon: LockKeyhole, title: 'Controle granular de acesso', text: 'Bloqueie downloads, defina senhas, limite reproduções ou revogue links com um único clique.', wide: false },
+  { icon: FolderOpen, title: 'Organização por projetos e stems', text: 'Agrupe versões, letras, capas em alta resolução e pacotes de stems em coleções elegantes prontas para envio à imprensa ou distribuidoras.', wide: true },
+];
+export default function FeaturesSection() {
+  return <section id="features" className="scroll-mt-16 bg-[#F9FAFB] px-5 py-20 sm:py-24"><div className="mx-auto max-w-6xl"><div className="max-w-2xl"><p className="text-sm font-medium text-indigo-600">Feito para o trabalho criativo</p><h2 className="mt-3 text-3xl font-semibold tracking-[-.04em] sm:text-4xl">Ferramentas essenciais. Zero distração.</h2><p className="mt-4 leading-7 text-gray-600">Projetado para substituir pastas desorganizadas no Drive, links expirados e planilhas de revisão.</p></div><div className="mt-10 grid gap-4 md:grid-cols-3">{features.map(({ icon: Icon, title, text, wide }) => <article key={title} className={`rounded-2xl border border-gray-200/80 bg-white p-7 shadow-xs transition-colors hover:border-gray-300 sm:p-8 ${wide ? 'md:col-span-2' : ''}`}><div className="inline-flex rounded-xl border border-gray-200/60 bg-gray-50 p-2.5 text-gray-700"><Icon size={21} strokeWidth={1.5} /></div><h3 className="mt-6 text-lg font-semibold tracking-tight">{title}</h3><p className="mt-2 max-w-xl text-sm leading-6 text-gray-600">{text}</p></article>)}</div></div></section>;
+}

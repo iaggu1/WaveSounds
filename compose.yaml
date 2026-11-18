@@ -1,0 +1,113 @@
+services:
+  database:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?Configure POSTGRES_USER no arquivo .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Configure POSTGRES_PASSWORD no arquivo .env}
+      POSTGRES_DB: ${POSTGRES_DB:?Configure POSTGRES_DB no arquivo .env}
+    volumes:
+      - forma-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      forma:
+        ipv4_address: 172.28.0.4
+
+  rate-limiter:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      forma:
+        ipv4_address: 172.28.0.5
+
+  migrate:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: "no"
+    env_file: .env
+    depends_on:
+      database:
+        condition: service_healthy
+    command: ["alembic", "-c", "/app/backend/alembic.ini", "upgrade", "head"]
+    networks:
+      forma:
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      REDIS_URL: ${REDIS_URL:-redis://rate-limiter:6379/0}
+    depends_on:
+      database:
+        condition: service_healthy
+      rate-limiter:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    networks:
+      forma:
+        ipv4_address: 172.28.0.3
+
+  email-worker:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    stop_grace_period: 20s
+    env_file: .env
+    command: ["python", "-m", "backend.workers.email_worker"]
+    depends_on:
+      database:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    networks:
+      forma:
+        ipv4_address: 172.28.0.6
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        API_INTERNAL_URL: http://backend:8000
+    restart: unless-stopped
+    environment:
+      TRUSTED_INGRESS_CLIENT_IP: ${TRUSTED_INGRESS_CLIENT_IP:-false}
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    networks:
+      forma:
+        ipv4_address: 172.28.0.2
+
+volumes:
+  forma-postgres:
+
+networks:
+  forma:
+    ipam:
+      config:
+        - subnet: 172.28.0.0/24
+

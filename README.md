@@ -50,7 +50,8 @@ Requisitos: Python 3.11 ou superior, Node.js 24 ou superior e PostgreSQL local.
 - O backend rejeita campos desconhecidos, valida e normaliza e-mails, mascara PII em logs e retorna erros internos genéricos.
 - SQLAlchemy executa consultas parametrizadas. E-mails duplicados recebem resposta neutra. O IP não é persistido em texto claro; seu SHA-256 é usado para auditoria antiabuso.
 - O rate limit permite cinco requisições por minuto por endereço. O backend só considera `X-Forma-Client-IP` quando a conexão vem de um IP listado em `TRUSTED_PROXY_IPS`. O Next.js não encaminha um IP informado pelo navegador; no Compose local, isso faz as chamadas compartilharem o IP do proxy até que a extração de IP seja configurada no ingress confiável. A API não publica sua porta no host.
-- O frontend usa Next.js 16, React 19, ESLint 9 e `npm ci` com lockfile. O comando `npm run lint` executa ESLint diretamente, conforme o CLI atual do Next.js.
+- O frontend usa Next.js 16, React 19, ESLint 10 e `npm ci` com lockfile. O comando `npm run lint` executa ESLint diretamente, conforme o CLI atual do Next.js.
+- A auditoria npm em 18/11/2026 reportou 19 alertas altos pelos caminhos transitivos até `picomatch` (GHSA-fc5q-39xc-vjpf). O aviso atual não lista versão corrigida. A cadeia pertence às ferramentas de build/lint; reexecute `npm audit` após atualização upstream e antes de publicar.
 - O rate limit é mantido em memória por processo. Em produção com réplicas, use um armazenamento compartilhado e configure a cadeia de proxies confiáveis no ingress.
 - Os headers da API protegem contra clickjacking, MIME sniffing, exposição desnecessária de referrer e permissões de browser não usadas.
 - O tema claro/noturno pode ser alternado pela navegação e a escolha fica salva no `localStorage`.

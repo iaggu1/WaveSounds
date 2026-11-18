@@ -42,6 +42,7 @@ Requisitos: Python 3.11 ou superior, Node.js 24 ou superior, PostgreSQL e Redis 
 - `backend/api/v1`: endpoint de leads e envio de boas-vindas em background.
 - `backend/core`: configurações, sessão SQLAlchemy assíncrona, cliente Redis e rate limit compartilhado.
 - `backend/migrations`: migrações Alembic executadas antes de iniciar o backend.
+- `backend/scripts`: comandos administrativos interativos para exclusão e limpeza por período, sem imprimir e-mails.
 - `backend/models` e `backend/schemas`: modelo SQLAlchemy e contrato Pydantic estrito.
 - `compose.yaml` e os Dockerfiles: ambiente local integrado com somente a porta web publicada.
 
@@ -56,6 +57,8 @@ Requisitos: Python 3.11 ou superior, Node.js 24 ou superior, PostgreSQL e Redis 
 - O frontend envia CSP com nonce por resposta, além de proteção contra MIME sniffing e clickjacking, política de referrer e permissões restritas. O nonce exige renderização dinâmica da página e desabilita cache compartilhado para HTML; os assets imutáveis são excluídos do proxy. Configure HSTS no ingress que termina TLS quando o domínio estiver servido somente por HTTPS.
 - A auditoria npm em 18/11/2026 reportou 19 alertas altos pelos caminhos transitivos até `picomatch` (GHSA-fc5q-39xc-vjpf). O aviso atual não lista versão corrigida. A cadeia pertence às ferramentas de build/lint; reexecute `npm audit` após atualização upstream e antes de publicar.
 - O Redis compartilhado mantém a janela de rate limit entre processos. Em produção, use Redis gerenciado com TLS/autenticação, monitore disponibilidade e configure a origem do IP somente por ingress confiável.
+- Para atender uma solicitação confirmada de exclusão, verifique a identidade por um canal independente e execute `docker compose exec backend python -m backend.scripts.delete_lead`; o e-mail é digitado sem eco e a confirmação exige `EXCLUIR`.
+- Para avaliar retenção, execute `docker compose exec backend python -m backend.scripts.purge_expired_leads --older-than-days <dias>` primeiro sem `--execute`. Após aprovar o prazo aplicável, repita com `--execute`. Não há exclusão automática nem prazo legal presumido; exclusões em backups seguem a política do operador.
 - Os headers da API protegem contra clickjacking, MIME sniffing, exposição desnecessária de referrer e permissões de browser não usadas.
 - O tema claro/noturno pode ser alternado pela navegação e a escolha fica salva no `localStorage`.
 - `.gitignore` exclui ambientes virtuais, dependências, artefatos de build, logs e arquivos `.env`, mantendo os exemplos de configuração versionáveis.

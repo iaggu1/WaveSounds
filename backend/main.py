@@ -5,25 +5,33 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from redis.exceptions import RedisError
 from sqlalchemy import text
 
 from backend.api.v1.endpoints import router
 from backend.core.config import get_settings
 from backend.core.database import engine
 from backend.models.lead import Base
-from backend.core.security import allow_request, client_ip
+from backend.core.rate_limit import allow_lead_request
+from backend.core.redis_client import redis_client
+from backend.core.security import client_ip
 
 settings = get_settings()
 ALLOWED_ORIGINS = {origin.strip() for origin in settings.allowed_origins.split(",") if origin.strip()}
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
+logger = logging.getLogger("forma.api")
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    async with engine.begin() as connection:
-        await connection.run_sync(Base.metadata.create_all)
-    yield
-    await engine.dispose()
+    try:
+        await redis_client.ping()
+        async with engine.begin() as connection:
+            await connection.run_sync(Base.metadata.create_all)
+        yield
+    finally:
+        await redis_client.aclose()
+        await engine.dispose()
 
 
 app = FastAPI(title="forma. API", version="1.0.0", docs_url="/docs" if settings.app_env == "development" else None, redoc_url=None, lifespan=lifespan)
@@ -40,12 +48,29 @@ app.add_middleware(
 async def add_security_headers(request: Request, call_next):
     if request.method == "POST" and request.url.path == "/api/v1/leads":
         request_ip = client_ip(request)
-        if not allow_request(request_ip):
+        try:
+            allowed = await allow_lead_request(redis_client, request_ip)
+        except RedisError as error:
+            logger.error("Rate limit indisponível (%s)", type(error).__name__)
+            unavailable = JSONResponse(status_code=503, content={"detail": "Serviço temporariamente indisponível."})
+            origin = request.headers.get("origin")
+            if origin in ALLOWED_ORIGINS:
+                unavailable.headers["Access-Control-Allow-Origin"] = origin
+                unavailable.headers["Vary"] = "Origin"
+            unavailable.headers["Retry-After"] = "10"
+            unavailable.headers["X-Content-Type-Options"] = "nosniff"
+            unavailable.headers["X-Frame-Options"] = "DENY"
+            unavailable.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+            unavailable.headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'; base-uri 'none'"
+            unavailable.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+            return unavailable
+        if not allowed:
             limited = JSONResponse(status_code=429, content={"detail": "Limite de tentativas excedido. Aguarde um minuto e tente novamente."})
             origin = request.headers.get("origin")
             if origin in ALLOWED_ORIGINS:
                 limited.headers["Access-Control-Allow-Origin"] = origin
                 limited.headers["Vary"] = "Origin"
+            limited.headers["Retry-After"] = "60"
             limited.headers["X-Content-Type-Options"] = "nosniff"
             limited.headers["X-Frame-Options"] = "DENY"
             limited.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
@@ -74,9 +99,11 @@ async def internal_error_handler(_: Request, exc: Exception) -> JSONResponse:
 
 @app.get("/health", include_in_schema=False)
 async def health() -> dict[str, str]:
+    await redis_client.ping()
     async with engine.connect() as connection:
         await connection.execute(text("SELECT 1"))
     return {"status": "ok"}
 
 
 app.include_router(router, prefix="/api/v1")
+

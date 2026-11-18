@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     allowed_origins: str = "http://localhost:3000"
     trusted_proxy_ips: str = ""
     database_url: str
+    redis_url: str = "redis://127.0.0.1:6379/0"
     resend_api_key: str = ""
     email_from: str = "convite@forma.audio"
 
@@ -18,3 +19,4 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
+

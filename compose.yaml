@@ -83,6 +83,7 @@ services:
         condition: service_completed_successfully
     networks:
       forma:
+        ipv4_address: 172.28.0.6
 
   frontend:
     build:

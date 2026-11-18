@@ -1,3 +1,5 @@
+import { Buffer } from 'node:buffer';
+import { randomUUID } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
 
 export function proxy(request: NextRequest) {
@@ -10,7 +12,7 @@ export function proxy(request: NextRequest) {
     return NextResponse.next({ request: { headers: requestHeaders } });
   }
 
-  const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
+  const nonce = Buffer.from(randomUUID()).toString('base64');
   const isDevelopment = process.env.NODE_ENV === 'development';
   const contentSecurityPolicy = `
     default-src 'self';

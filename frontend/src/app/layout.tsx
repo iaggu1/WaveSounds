@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { headers } from 'next/headers';
 import { Inter, Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/components/ThemeProvider';
@@ -12,6 +13,9 @@ export const metadata: Metadata = {
   openGraph: { title: 'forma. — Seu estúdio na nuvem', description: 'Compartilhe masters e receba feedback preciso, sem perdas de qualidade.', type: 'website', locale: 'pt_BR', images: [{ url: '/og-image.svg', width: 1200, height: 630, alt: 'forma. — espaço de trabalho para áudio e criação' }] },
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="pt-BR" suppressHydrationWarning><body className={`${jakarta.variable} ${inter.variable}`}><ThemeProvider>{children}</ThemeProvider></body></html>;
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const nonce = (await headers()).get('x-nonce') ?? undefined;
+
+  return <html lang="pt-BR" suppressHydrationWarning><body className={`${jakarta.variable} ${inter.variable}`}><ThemeProvider nonce={nonce}>{children}</ThemeProvider></body></html>;
 }
+

@@ -28,7 +28,7 @@ O envio do formulário persiste o lead no PostgreSQL. Para enviar a mensagem de 
 Requisitos: Python 3.11 ou superior, Node.js 24 ou superior, PostgreSQL e Redis disponíveis localmente.
 
 1. Copie `backend/.env.example` para `backend/.env` e configure as conexões PostgreSQL e Redis, CORS e Resend. Para iniciar um Redis local descartável, execute `docker run --rm -p 6379:6379 redis:7-alpine` em outro terminal.
-2. Na raiz, instale a API com `pip install -r backend/requirements.txt` e execute `uvicorn backend.main:app --reload`.
+2. Na raiz, instale a API com `pip install -r backend/requirements.txt`, aplique `alembic -c backend/alembic.ini upgrade head` e execute `uvicorn backend.main:app --reload`.
 3. Em outro terminal, entre em `frontend/`, copie `.env.local.example` para `.env.local`, execute `npm ci` e `npm run dev`.
 4. Abra **http://localhost:3000**. O Next.js encaminha `/api/v1/*` para `http://127.0.0.1:8000` por padrão.
 
@@ -41,6 +41,7 @@ Requisitos: Python 3.11 ou superior, Node.js 24 ou superior, PostgreSQL e Redis 
 - `frontend/src/proxy.ts`: remove qualquer `X-Forma-Client-IP` enviado pelo navegador, gera o nonce CSP para páginas e aplica os headers de segurança.
 - `backend/api/v1`: endpoint de leads e envio de boas-vindas em background.
 - `backend/core`: configurações, sessão SQLAlchemy assíncrona, cliente Redis e rate limit compartilhado.
+- `backend/migrations`: migrações Alembic executadas antes de iniciar o backend.
 - `backend/models` e `backend/schemas`: modelo SQLAlchemy e contrato Pydantic estrito.
 - `compose.yaml` e os Dockerfiles: ambiente local integrado com somente a porta web publicada.
 
@@ -48,13 +49,13 @@ Requisitos: Python 3.11 ou superior, Node.js 24 ou superior, PostgreSQL e Redis 
 
 - CORS aceita apenas `ALLOWED_ORIGINS`; a chamada browser do setup integrado permanece na origem `localhost:3000`.
 - O backend rejeita campos desconhecidos, valida e normaliza e-mails, mascara PII em logs e retorna erros internos genéricos.
-- SQLAlchemy executa consultas parametrizadas. E-mails duplicados recebem resposta neutra. O IP não é persistido em texto claro; seu SHA-256 é usado para auditoria antiabuso.
+- SQLAlchemy executa consultas parametrizadas. E-mails duplicados recebem resposta neutra. O IP não é persistido no banco; somente uma chave derivada é mantida temporariamente no Redis para rate limit e expira em 60 segundos.
 - O rate limit permite cinco requisições por minuto por endereço, usando contador Redis atômico e compartilhado entre processos. Se Redis falhar, o endpoint rejeita novos envios com HTTP 503 para não desativar silenciosamente a proteção. O Redis não publica porta no host pelo Compose e o health check da API verifica Redis e PostgreSQL.
 - O backend só considera `X-Forma-Client-IP` quando a conexão vem de um IP listado em `TRUSTED_PROXY_IPS`. O Next.js remove esse header vindo do navegador; no Compose local, chamadas compartilham o IP do proxy até que um ingress confiável configure a origem do IP do cliente. A API não publica sua porta no host.
 - O frontend usa Next.js 16, React 19, ESLint 10 e `npm ci` com lockfile. O comando `npm run lint` executa ESLint diretamente, conforme o CLI atual do Next.js.
 - O frontend envia CSP com nonce por resposta, além de proteção contra MIME sniffing e clickjacking, política de referrer e permissões restritas. O nonce exige renderização dinâmica da página e desabilita cache compartilhado para HTML; os assets imutáveis são excluídos do proxy. Configure HSTS no ingress que termina TLS quando o domínio estiver servido somente por HTTPS.
 - A auditoria npm em 18/11/2026 reportou 19 alertas altos pelos caminhos transitivos até `picomatch` (GHSA-fc5q-39xc-vjpf). O aviso atual não lista versão corrigida. A cadeia pertence às ferramentas de build/lint; reexecute `npm audit` após atualização upstream e antes de publicar.
-- O rate limit é mantido em memória por processo. Em produção com réplicas, use um armazenamento compartilhado e configure a cadeia de proxies confiáveis no ingress.
+- O Redis compartilhado mantém a janela de rate limit entre processos. Em produção, use Redis gerenciado com TLS/autenticação, monitore disponibilidade e configure a origem do IP somente por ingress confiável.
 - Os headers da API protegem contra clickjacking, MIME sniffing, exposição desnecessária de referrer e permissões de browser não usadas.
 - O tema claro/noturno pode ser alternado pela navegação e a escolha fica salva no `localStorage`.
 - `.gitignore` exclui ambientes virtuais, dependências, artefatos de build, logs e arquivos `.env`, mantendo os exemplos de configuração versionáveis.
@@ -63,6 +64,6 @@ Requisitos: Python 3.11 ou superior, Node.js 24 ou superior, PostgreSQL e Redis 
 
 - A seção de fluxo lista WAV, MP3 e FLAC como formatos de envio, mas esta landing page não implementa upload de arquivos.
 - O player gera um tom discreto via Web Audio API para demonstrar a interação; não reproduz os arquivos indicados no mockup.
-- A tabela é criada ao iniciar a API. Adote migrações antes de evoluir o schema em produção.
+- O schema é gerenciado por migrações Alembic executadas antes da API. Dados existentes são mantidos; a migração remove apenas a coluna de hash de IP persistido.
 - Planos, nomes de estúdios, capacidades e afirmações comerciais vieram da especificação e devem ser confirmados antes do lançamento público.
 

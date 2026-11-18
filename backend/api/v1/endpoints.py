@@ -1,14 +1,14 @@
 import logging
 
 import httpx
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, Response, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Response, status
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.config import get_settings
 from backend.core.database import get_session
-from backend.core.security import client_ip, ip_digest, log_email_event
+from backend.core.security import log_email_event
 from backend.models.lead import Lead
 from backend.schemas.lead import LeadCreateRequest
 
@@ -44,12 +44,10 @@ async def send_welcome_email(email: str, plan: str) -> None:
 @router.post("/leads", status_code=status.HTTP_201_CREATED, responses={200: {"description": "Lead já cadastrado"}})
 async def create_lead(
     payload: LeadCreateRequest,
-    request: Request,
     background_tasks: BackgroundTasks,
     response: Response,
     session: AsyncSession = Depends(get_session),
 ) -> dict[str, str]:
-    request_ip = client_ip(request)
     if payload.company_website:
         return SUCCESS
 
@@ -60,7 +58,7 @@ async def create_lead(
             response.status_code = status.HTTP_200_OK
             return SUCCESS
 
-        lead = Lead(email=email, plan_interest=payload.plan_interest, ip_hash=ip_digest(request_ip))
+        lead = Lead(email=email, plan_interest=payload.plan_interest)
         session.add(lead)
         await session.commit()
     except IntegrityError:
@@ -74,3 +72,4 @@ async def create_lead(
 
     background_tasks.add_task(send_welcome_email, email, payload.plan_interest)
     return SUCCESS
+

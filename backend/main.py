@@ -11,7 +11,6 @@ from sqlalchemy import text
 from backend.api.v1.endpoints import router
 from backend.core.config import get_settings
 from backend.core.database import engine
-from backend.models.lead import Base
 from backend.core.rate_limit import allow_lead_request
 from backend.core.redis_client import redis_client
 from backend.core.security import client_ip
@@ -26,8 +25,6 @@ logger = logging.getLogger("forma.api")
 async def lifespan(_: FastAPI):
     try:
         await redis_client.ping()
-        async with engine.begin() as connection:
-            await connection.run_sync(Base.metadata.create_all)
         yield
     finally:
         await redis_client.aclose()

@@ -38,7 +38,7 @@ Requisitos: Python 3.11 ou superior, Node.js 24 ou superior e PostgreSQL local.
 - `frontend/src/components`: seções da landing page; formulário, player, FAQ e hero usam estado no cliente.
 - `frontend/src/components/ThemeProvider.tsx` e `ThemeToggle.tsx`: seletor entre modo claro e noturno, com preferência salva no navegador.
 - `frontend/src/lib/api-client.ts`: envio de leads pela mesma origem do site.
-- `frontend/middleware.ts`: encaminha um IP validado pelo backend apenas quando a chamada vem do proxy confiável.
+- `frontend/proxy.ts`: remove qualquer `X-Forma-Client-IP` enviado pelo navegador para que o cliente não escolha o IP usado no rate limit.
 - `backend/api/v1`: endpoint de leads e envio de boas-vindas em background.
 - `backend/core`: configurações, sessão SQLAlchemy assíncrona e rate limit.
 - `backend/models` e `backend/schemas`: modelo SQLAlchemy e contrato Pydantic estrito.
@@ -49,7 +49,8 @@ Requisitos: Python 3.11 ou superior, Node.js 24 ou superior e PostgreSQL local.
 - CORS aceita apenas `ALLOWED_ORIGINS`; a chamada browser do setup integrado permanece na origem `localhost:3000`.
 - O backend rejeita campos desconhecidos, valida e normaliza e-mails, mascara PII em logs e retorna erros internos genéricos.
 - SQLAlchemy executa consultas parametrizadas. E-mails duplicados recebem resposta neutra. O IP não é persistido em texto claro; seu SHA-256 é usado para auditoria antiabuso.
-- O rate limit permite cinco requisições por minuto por endereço. O backend só considera `X-Forma-Client-IP` quando a conexão vem de um IP listado em `TRUSTED_PROXY_IPS`; no Compose local, apenas o contêiner Next.js é confiável e a API não publica sua porta no host.
+- O rate limit permite cinco requisições por minuto por endereço. O backend só considera `X-Forma-Client-IP` quando a conexão vem de um IP listado em `TRUSTED_PROXY_IPS`. O Next.js não encaminha um IP informado pelo navegador; no Compose local, isso faz as chamadas compartilharem o IP do proxy até que a extração de IP seja configurada no ingress confiável. A API não publica sua porta no host.
+- O frontend usa Next.js 16, React 19, ESLint 9 e `npm ci` com lockfile. O comando `npm run lint` executa ESLint diretamente, conforme o CLI atual do Next.js.
 - O rate limit é mantido em memória por processo. Em produção com réplicas, use um armazenamento compartilhado e configure a cadeia de proxies confiáveis no ingress.
 - Os headers da API protegem contra clickjacking, MIME sniffing, exposição desnecessária de referrer e permissões de browser não usadas.
 - O tema claro/noturno pode ser alternado pela navegação e a escolha fica salva no `localStorage`.
@@ -61,3 +62,4 @@ Requisitos: Python 3.11 ou superior, Node.js 24 ou superior e PostgreSQL local.
 - O player gera um tom discreto via Web Audio API para demonstrar a interação; não reproduz os arquivos indicados no mockup.
 - A tabela é criada ao iniciar a API. Adote migrações antes de evoluir o schema em produção.
 - Planos, nomes de estúdios, capacidades e afirmações comerciais vieram da especificação e devem ser confirmados antes do lançamento público.
+

@@ -32,6 +32,21 @@ Requisitos: Python 3.11 ou superior, Node.js 24 ou superior, PostgreSQL e Redis 
 3. Em outro terminal, entre em `frontend/`, copie `.env.local.example` para `.env.local`, execute `npm ci` e `npm run dev`.
 4. Abra **http://localhost:3000**. O Next.js encaminha `/api/v1/*` para `http://127.0.0.1:8000` por padrão.
 
+## Validação automática
+
+O GitHub Actions executa em cada pull request para `main` e em pushes para `main` e `feat/forma-landing-page`. O pipeline instala dependências do frontend pelo lockfile e executa ESLint, checagem TypeScript e build de produção. No backend, compila os módulos Python e aplica as migrações em um PostgreSQL descartável. O workflow usa permissões somente de leitura e fixa as GitHub Actions por SHA.
+
+Para repetir as verificações do frontend localmente, execute na pasta `frontend/`:
+
+```powershell
+npm ci
+npm run lint
+npx tsc --noEmit
+npm run build
+```
+
+O pipeline não publica imagens nem faz deploy. A exigência de aprovação de checks antes do merge deve ser ativada nas regras de proteção da branch `main` do GitHub.
+
 ## Estrutura
 
 - `frontend/src/app`: rotas App Router, metadados, fontes e estilos globais.
